@@ -1,0 +1,22 @@
+{
+    "login":
+    {
+        "martrikelNr": "01234567",
+        "password": "********"
+    },
+    "registrations":
+    [
+        {
+            "address": "https://tiss.tuwien.ac.at/education/course/courseRegistration.xhtml?dswid=1090&dsrid=501&courseNr=182711&semester=2017W",
+            "name": "LVA-Anmeldung"
+        },
+        {
+            "address": "https://tiss.tuwien.ac.at/education/course/examDateList.xhtml?dswid=1090&dsrid=391&courseNr=185278&semester=2017W",
+            "name": "3. TIL Prüfung 07.05.2018"
+        },
+        {
+            "address": "https://tiss.tuwien.ac.at/education/course/groupList.xhtml?dswid=1090&dsrid=709&courseNr=104263&semester=2018S",
+            "name": "G1"
+        }
+    ]
+}

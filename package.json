@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "moment": "^2.21.0",
+    "puppeteer": "^1.1.1"
+  }
+}
