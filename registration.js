@@ -302,7 +302,7 @@ async function getWrapper(page, name) {
             var referenceName = name.trim();
             parsedName = parsedName.replace(/  +/g, ' ').trim();
 
-            console.log('got:\t\t' + parsedName + '\nreference: \t' + name);
+            // console.log('got:\t\t' + parsedName + '\nreference: \t' + name);
 
             var selectorName = groupWrappers[i].querySelector('input[value="Anmelden"]');
             selectorName = selectorName !== null ? selectorName.name : '';
