@@ -11,11 +11,9 @@ Before starting the bot you have to edit the configuration file named `register.
 -`name`: the whole name of the course (including date if it's in the name, see the picture)
 
 <br>
-<br>
 
 ![selector](https://github.com/L-E-O-N-H-A-R-D/TissRegistrationBot/blob/master/img/selector.png?raw=true)
 
-<br>
 <br>
 
 When the configuration was updated start a terminal and navigate to the folder with the `cd` command. Then, arrived in the folder, start:
