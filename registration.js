@@ -89,7 +89,7 @@ var lt = require('long-timeout');
         if (registrations[i].end) {
             let millisTillEnd = moment(registrations[i].end, 'DD.MM.YYYY, HH:mm').valueOf();
             if (millisTillEnd < moment().valueOf()) {
-                console.log('registration over');
+                console.log('registration over: ' + registrations[i].name);
                 error++;
                 continue;
             }
