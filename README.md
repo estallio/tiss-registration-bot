@@ -24,7 +24,7 @@ and
 
 `node registration.js register.json`
 
-Here, `register.json` is a console-parameter and represents the .json formatted file, structured as you can see in the sample file.
+Here, `register.json` is a console-parameter and represents the .json formatted file. The structure as expected like in the sample file.
 
 **Do not forget to delete the sample itmes before you start the bot!**
 
