@@ -16,7 +16,7 @@ Before starting the bot you have to edit the configuration file named `register.
 
 <br>
 
-When the configuration was updated start a terminal and navigate to the folder with the `cd` command. Then, arrived in the folder, start:
+When the configuration was updated start a terminal and navigate to the folder. Arrived in the folder, start:
 
 <br>
 
