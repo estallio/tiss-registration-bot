@@ -18,15 +18,17 @@ Before starting the bot you have to edit the configuration file named `register.
 
 When the configuration was updated start a terminal and navigate to the folder with the `cd` command. Then, arrived in the folder, start:
 
+<br>
+
 `npm install`
 
-and
+and afterwards:
 
 `node registration.js register.json`
 
 <br>
 
-Here, `register.json` is a console-parameter and represents the .json formatted file. The structure as expected like in the sample file.
+Here, `register.json` is a console-parameter and represents the .json formatted file. The structure as expected like in the sample file. After starting the bot you should see some console output what the bot is actually doing. When the bot has to wait for a registration to begin, every 30 seconds a status message will pe printed to the console.
 
 **Do not forget to delete the sample itmes before you start the bot!**
 
