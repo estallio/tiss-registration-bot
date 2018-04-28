@@ -37,3 +37,5 @@ Keep on mind a few things when using the bot:
  - If an error occurs, the bot cancels a single registration or terminates as a whole.
  - Insert only german course names as the default language from Tiss is german.
  - Always look at the Tiss favourites if you are registered to some courses or not.
+ 
+ If something went wrong or you realized an error please open an issue or send me an email.
