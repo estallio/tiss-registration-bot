@@ -2,6 +2,7 @@ const fs = require('fs');
 const moment = require('moment');
 const puppeteer = require('puppeteer');
 const Page = require('puppeteer/lib/Page');
+var lt = require('long-timeout');
 
 (async () => {
     /**
@@ -103,7 +104,7 @@ const Page = require('puppeteer/lib/Page');
         /**
          * login 30 seconds before registration starts
          */
-        setTimeout(async () => {
+        lt.setTimeout(async () => {
             const page = await newPageWithNewContext(browser);
             
             page.error = () => {
@@ -145,7 +146,7 @@ const Page = require('puppeteer/lib/Page');
                 /**
                  * register
                  */
-                setTimeout(async () => {
+                lt.setTimeout(async () => {
                     try {
                         await register(page, registrations[i].name);
                         await closePage(browser, page);

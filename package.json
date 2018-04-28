@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "long-timeout": "^0.1.1",
     "moment": "^2.21.0",
     "puppeteer": "^1.1.1"
   }
