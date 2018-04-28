@@ -7,8 +7,8 @@ To use the bot only node and npm are needed. If you do not have already installe
 ## Usage
 Before starting the bot you have to edit the configuration file named `register.json`. In this file simply put your `studenId` and your `password` in the first section. In the array of registrations add a registration as follows:
 
--`address`: the link from the tiss registration site<br>
--`name`: the whole name of the course (including date if it's in the name, see the picture)
+- `address`: the link from the tiss registration site<br>
+- `name`: the whole name of the course (including date if it's in the name, see the picture)
 
 <br>
 
