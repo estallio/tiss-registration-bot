@@ -24,6 +24,8 @@ and
 
 `node registration.js register.json`
 
+<br>
+
 Here, `register.json` is a console-parameter and represents the .json formatted file. The structure as expected like in the sample file.
 
 **Do not forget to delete the sample itmes before you start the bot!**
@@ -31,5 +33,5 @@ Here, `register.json` is a console-parameter and represents the .json formatted 
 Keep on mind a few things when using the bot:
  - The bot does not have a reconnect function.
  - If an error occurs, the bot cancels a single registration or terminates as a whole.
- - Insert only german course names as the default language from this is german.
+ - Insert only german course names as the default language from Tiss is german.
  - Always look at the Tiss favourites if you are registered to some courses or not.
