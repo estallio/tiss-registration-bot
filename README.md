@@ -36,6 +36,7 @@ Keep on mind a few things when using the bot:
  - The bot does not have a reconnect function.
  - If an error occurs (eg credentials are wrong), the bot cancels a single registration or terminates as a whole.
  - Insert only german course names as the default language from Tiss is german.
+ - Look at the specific registration details: only default registrations over Tiss with a begin-date are possible.
  - Always look at the Tiss favourites if you are registered to some courses or not.
  
  If something went wrong or you realized an error please open an issue or send me an email.
