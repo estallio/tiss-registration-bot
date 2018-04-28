@@ -10,7 +10,7 @@ const Page = require('puppeteer/lib/Page');
     console.log('read input...');
     const inputFile = process.argv[2];
     const jsonInput = JSON.parse(fs.readFileSync(inputFile, 'utf8'));
-    const martrikelNr = jsonInput.login.martrikelNr;
+    const martrikelNr = jsonInput.login.studentId;
     const password = jsonInput.login.password;
     const registrationInput = jsonInput.registrations;
 
