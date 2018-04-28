@@ -1,7 +1,7 @@
 {
     "login":
     {
-        "matrikelNr": "01234567",
+        "studentId": "01234567",
         "password": "********"
     },
     "registrations":
