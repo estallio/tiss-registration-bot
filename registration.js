@@ -5,6 +5,8 @@ const Page = require('puppeteer/lib/Page');
 var lt = require('long-timeout');
 
 (async () => {
+    try {
+
     /**
      * read input
      */
@@ -172,6 +174,10 @@ var lt = require('long-timeout');
             clearInterval(update);
         }
     }, 10000);
+    } catch(ex) {
+        console.log(ex);
+    }
+    process.exit();
 })();
 
 /**
