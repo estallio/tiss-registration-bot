@@ -6,178 +6,177 @@ var lt = require('long-timeout');
 
 (async () => {
     try {
+        /**
+         * read input
+         */
+        console.log('read input...');
+        const inputFile = process.argv[2];
+        const jsonInput = JSON.parse(fs.readFileSync(inputFile, 'utf8'));
+        const martrikelNr = jsonInput.login.studentId;
+        const password = jsonInput.login.password;
+        const registrationInput = jsonInput.registrations;
 
-    /**
-     * read input
-     */
-    console.log('read input...');
-    const inputFile = process.argv[2];
-    const jsonInput = JSON.parse(fs.readFileSync(inputFile, 'utf8'));
-    const martrikelNr = jsonInput.login.studentId;
-    const password = jsonInput.login.password;
-    const registrationInput = jsonInput.registrations;
+        /**
+         * login
+         */
+        console.log('launch chrome...');
+        const browser = await puppeteer.launch({args: ['--no-sandbox --headless --disable-gpu']});
+        const initPage = await newPageWithNewContext(browser);
+        await login(initPage, martrikelNr, password);
 
-    /**
-     * login
-     */
-    console.log('launch chrome...');
-    const browser = await puppeteer.launch({args: ['--no-sandbox --headless --disable-gpu']});
-    const initPage = await newPageWithNewContext(browser);
-    await login(initPage, martrikelNr, password);
-
-    /**
-     * get windowhandler.js file first to speed up later refresh
-     */
-    console.log('get windowhandler.js...');
-    let windowHandlerJs = '';
-    initPage.on('response', response => {    
-        const url = response.url();
-        if (url.indexOf('windowhandler.js.xhtml') !== -1) {
-            response.text().then(
-                text => {
-                    windowHandlerJs += text;
-                }
-          );
-        }
-    });
-    await initPage.goto(registrationInput[0].address);
-    await initPage.waitFor('form');
-
-    /**
-     * register windowhandler.js file
-     */
-    await initPage.evaluateOnNewDocument(windowHandlerJs);
-
-    /**
-     * prevent all kinds of dependencies
-     */
-    await interceptRequests(initPage);
-
-    /**
-     * get register-start dates
-     */
-    let registrations = [];
-    for (let i = 0; i < registrationInput.length; i++) {
-        await initPage.goto(registrationInput[i].address);
+        /**
+         * get windowhandler.js file first to speed up later refresh
+         */
+        console.log('get windowhandler.js...');
+        let windowHandlerJs = '';
+        initPage.on('response', response => {    
+            const url = response.url();
+            if (url.indexOf('windowhandler.js.xhtml') !== -1) {
+                response.text().then(
+                    text => {
+                        windowHandlerJs += text;
+                    }
+            );
+            }
+        });
+        await initPage.goto(registrationInput[0].address);
         await initPage.waitFor('form');
 
-        registrations.push({
-            ...registrationInput[i],
-            ... await getWrapper(initPage, registrationInput[i].name)
-        });
-    }
-
-    /**
-     * close init-page
-     */
-    await closePage(browser, initPage);
-
-    /**
-     * sort 
-     */
-    registrations.sort((a, b)=> a.begin - b.begin);
-
-    let error = 0;
-    let finished = 0;
-
-    /**
-     * start timeouts
-     */
-    for (let i = 0; i < registrations.length; i++) {
-        
         /**
-         * check if registration is over
+         * register windowhandler.js file
          */
-        if (registrations[i].end) {
-            let millisTillEnd = moment(registrations[i].end, 'DD.MM.YYYY, HH:mm').valueOf();
-            if (millisTillEnd < moment().valueOf()) {
-                console.log('registration over: ' + registrations[i].name);
-                error++;
-                continue;
-            }
+        await initPage.evaluateOnNewDocument(windowHandlerJs);
+
+        /**
+         * prevent all kinds of dependencies
+         */
+        await interceptRequests(initPage);
+
+        /**
+         * get register-start dates
+         */
+        let registrations = [];
+        for (let i = 0; i < registrationInput.length; i++) {
+            await initPage.goto(registrationInput[i].address);
+            await initPage.waitFor('form');
+
+            registrations.push({
+                ...registrationInput[i],
+                ... await getWrapper(initPage, registrationInput[i].name)
+            });
         }
 
         /**
-         * calculate milliseconds till registration starts
+         * close init-page
          */
-        let millisTillBegin = moment(registrations[i].begin, 'DD.MM.YYYY, HH:mm').valueOf();
-        millisTillBegin = millisTillBegin - moment().valueOf();
+        await closePage(browser, initPage);
 
         /**
-         * login 30 seconds before registration starts
+         * sort 
          */
-        lt.setTimeout(async () => {
-            const page = await newPageWithNewContext(browser);
+        registrations.sort((a, b)=> a.begin - b.begin);
+
+        let error = 0;
+        let finished = 0;
+
+        /**
+         * start timeouts
+         */
+        for (let i = 0; i < registrations.length; i++) {
             
-            page.error = () => {
-                error++;
+            /**
+             * check if registration is over
+             */
+            if (registrations[i].end) {
+                let millisTillEnd = moment(registrations[i].end, 'DD.MM.YYYY, HH:mm').valueOf();
+                if (millisTillEnd < moment().valueOf()) {
+                    console.log('registration over: ' + registrations[i].name);
+                    error++;
+                    continue;
+                }
             }
 
-            page.finished = () => {
-                finished++;
-            }
+            /**
+             * calculate milliseconds till registration starts
+             */
+            let millisTillBegin = moment(registrations[i].begin, 'DD.MM.YYYY, HH:mm').valueOf();
+            millisTillBegin = millisTillBegin - moment().valueOf();
 
-            try {
-                /**
-                 * login
-                 */
-                await login(page, martrikelNr, password);
-
-                /**
-                 * prevent all kinds of dependencies
-                 */
-                await interceptRequests(page);
-
-                /**
-                 * register windowhandler.js file
-                 */
-                await page.evaluateOnNewDocument(windowHandlerJs);
-
-                /**
-                 * load register page
-                 */
-                await page.goto(registrations[i].address);
-                await page.waitFor('form');
+            /**
+             * login 30 seconds before registration starts
+             */
+            lt.setTimeout(async () => {
+                const page = await newPageWithNewContext(browser);
                 
-                /**
-                 * refresh millis
-                 */
-                millisTillBegin = moment(registrations[i].begin, 'DD.MM.YYYY, HH:mm').valueOf();
-                millisTillBegin = millisTillBegin - moment().valueOf();
+                page.error = () => {
+                    error++;
+                }
 
-                /**
-                 * register
-                 */
-                lt.setTimeout(async () => {
-                    try {
-                        await register(page, registrations[i].name);
-                        await closePage(browser, page);
-                        page.finished();
-                    } catch(ex) {
-                        await closePage(browser, page);
-                        page.error();
-                    }
-                }, millisTillBegin);
-            } catch(ex) {
-                await closePage(browser, page);
-                page.error();
-            }
-        }, millisTillBegin - 30000);
-    }
+                page.finished = () => {
+                    finished++;
+                }
 
-    let update = setInterval(async () => {
-        console.log('pending: ' + (registrations.length - error - finished) + ', finished: ' + finished + ', error: ' + error);
+                try {
+                    /**
+                     * login
+                     */
+                    await login(page, martrikelNr, password);
 
-        if (error + finished === registrations.length) {
-            console.log('finished registration...');
-            await browser.close();
-            clearInterval(update);
+                    /**
+                     * prevent all kinds of dependencies
+                     */
+                    await interceptRequests(page);
+
+                    /**
+                     * register windowhandler.js file
+                     */
+                    await page.evaluateOnNewDocument(windowHandlerJs);
+
+                    /**
+                     * load register page
+                     */
+                    await page.goto(registrations[i].address);
+                    await page.waitFor('form');
+                    
+                    /**
+                     * refresh millis
+                     */
+                    millisTillBegin = moment(registrations[i].begin, 'DD.MM.YYYY, HH:mm').valueOf();
+                    millisTillBegin = millisTillBegin - moment().valueOf();
+
+                    /**
+                     * register
+                     */
+                    lt.setTimeout(async () => {
+                        try {
+                            await register(page, registrations[i].name);
+                            await closePage(browser, page);
+                            page.finished();
+                        } catch(ex) {
+                            await closePage(browser, page);
+                            page.error();
+                        }
+                    }, millisTillBegin);
+                } catch(ex) {
+                    await closePage(browser, page);
+                    page.error();
+                }
+            }, Math.max(millisTillBegin - 30000, 0));
         }
-    }, 10000);
+
+        let update = setInterval(async () => {
+            console.log('pending: ' + (registrations.length - error - finished) + ', finished: ' + finished + ', error: ' + error);
+
+            if (error + finished === registrations.length) {
+                console.log('finished registration...');
+                await browser.close();
+                clearInterval(update);
+            }
+        }, 10000);
     } catch(ex) {
         console.log(ex);
+        process.exit();
     }
-    process.exit();
 })();
 
 /**
@@ -301,7 +300,7 @@ async function getWrapper(page, name) {
             }
             
             var parsedName = main + (text ? ' ' + text : '');
-            
+
             /**
              * always be careful with whitespaces
              */
