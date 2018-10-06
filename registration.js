@@ -310,6 +310,11 @@ async function getWrapper(page, name) {
             // console.log('got:\t\t' + parsedName + '\nreference: \t' + name);
 
             var selectorName = groupWrappers[i].querySelector('input[value="Anmelden"]');
+
+            if (!selectorName) {
+                selectorName = groupWrappers[i].querySelector('input[value="Voranmeldung"]');
+            }
+
             selectorName = selectorName !== null ? selectorName.name : '';
 
             if (name === parsedName) {
