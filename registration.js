@@ -1,8 +1,7 @@
 const fs = require('fs');
 const moment = require('moment');
 const puppeteer = require('puppeteer');
-const Page = require('puppeteer/lib/Page');
-var lt = require('long-timeout');
+const lt = require('long-timeout');
 
 (async () => {
     try {
@@ -20,7 +19,7 @@ var lt = require('long-timeout');
          * login
          */
         console.log('launch chrome...');
-        const browser = await puppeteer.launch({args: ['--no-sandbox --headless --disable-gpu']});
+        const browser = await puppeteer.launch({ headless: true, slowMo: 0, args: ['--no-sandboxs --disable-gpu'] });
         const initPage = await newPageWithNewContext(browser);
         await login(initPage, martrikelNr, password);
 
@@ -29,15 +28,21 @@ var lt = require('long-timeout');
          */
         console.log('get windowhandler.js...');
         let windowHandlerJs = '';
-        initPage.on('response', response => {    
-            const url = response.url();
-            if (url.indexOf('windowhandler.js.xhtml') !== -1) {
-                response.text().then(
-                    text => {
-                        windowHandlerJs += text;
-                    }
-            );
+        initPage.on('response', async response => {
+            if (![200, 201, 304].includes(response.status())) {
+                return;
             }
+            try {
+                await response.buffer();
+                const url = response.url();
+
+                if (url.indexOf('.js.xhtml') !== -1) {
+                    response.text()
+                        .then(text => {
+                            windowHandlerJs += '\n' + text;
+                        });
+                }
+            } catch (e) { }
         });
         await initPage.goto(registrationInput[0].address);
         await initPage.waitFor('form');
@@ -72,7 +77,7 @@ var lt = require('long-timeout');
         await closePage(browser, initPage);
 
         /**
-         * sort 
+         * sort
          */
         registrations.sort((a, b)=> a.begin - b.begin);
 
@@ -83,7 +88,7 @@ var lt = require('long-timeout');
          * start timeouts
          */
         for (let i = 0; i < registrations.length; i++) {
-            
+
             /**
              * check if registration is over
              */
@@ -107,7 +112,7 @@ var lt = require('long-timeout');
              */
             lt.setTimeout(async () => {
                 const page = await newPageWithNewContext(browser);
-                
+
                 page.error = () => {
                     error++;
                 }
@@ -137,7 +142,7 @@ var lt = require('long-timeout');
                      */
                     await page.goto(registrations[i].address);
                     await page.waitFor('form');
-                    
+
                     /**
                      * refresh millis
                      */
@@ -191,10 +196,11 @@ async function interceptRequests(page) {
         if (url.indexOf('.png') !== -1
         || url.indexOf('.jpg') !== -1
         || url.indexOf('.css') !== -1
+        || url.indexOf('.ico') !== -1
         || url.indexOf('.js') !== -1
-        || url.indexOf('.gif') !== -1)
+        || url.indexOf('.gif') !== -1) {
             interceptedRequest.abort();
-        else {
+        } else {
             interceptedRequest.continue();
         }
     });
@@ -222,23 +228,16 @@ async function login(page, martrikelNr, password) {
  */
 async function newPageWithNewContext(browser) {
     console.log('create new page...');
-    const { browserContextId } = await browser._connection.send('Target.createBrowserContext');
-    const { targetId } = await browser._connection.send('Target.createTarget', { url: 'about:blank', browserContextId });
-    const target = await browser._targets.get(targetId);
-    const client = await browser._connection.createSession(targetId);
-    const page = await Page.create(client, target, browser._ignoreHTTPSErrors, browser._appMode, browser._screenshotTaskQueue);
-    page.browserContextId = browserContextId;
+    const context = await browser.createIncognitoBrowserContext();
+    const page = await context.newPage();
     return page;
 }
 
 /**
- * closes a browser page 
+ * closes a browser page
  */
 async function closePage(browser, page) {
     console.log('close page...');
-    if (page.browserContextId != undefined) {
-        await browser._connection.send('Target.disposeBrowserContext', { browserContextId: page.browserContextId });
-    }
     await page.close();
 }
 
@@ -261,10 +260,10 @@ async function register(page, name) {
     await page.waitFor('input[value="Anmelden"]');
     await page.click('input[value="Anmelden"]');
     await page.waitFor('#wrapper');
-    
+
     let text = await page.evaluate(() => {
         var message = document.querySelector('.staticInfoMessage');
-        
+
         if (message) {
             return message.textContent;
         }
@@ -282,7 +281,7 @@ async function getWrapper(page, name) {
     console.log('get informations...');
 
     page.on('console', msg => console.log(msg.text()));
-    
+
     return await page.evaluate(name => {
         var groupWrappers = document.querySelectorAll('.groupWrapper');
 
@@ -298,7 +297,7 @@ async function getWrapper(page, name) {
                     text = childs[a].textContent.trim();
                 }
             }
-            
+
             var parsedName = main + (text ? ' ' + text : '');
 
             /**
