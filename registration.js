@@ -39,7 +39,7 @@ const lt = require('long-timeout');
                 if (url.indexOf('.js.xhtml') !== -1) {
                     response.text()
                         .then(text => {
-                            windowHandlerJs += '\n' + text;
+                            windowHandlerJs += ' ' + text;
                         });
                 }
             } catch (e) { }
