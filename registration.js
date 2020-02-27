@@ -199,7 +199,10 @@ async function interceptRequests(page) {
         || url.indexOf('.ico') !== -1
         || url.indexOf('.js') !== -1
         || url.indexOf('.gif') !== -1) {
-            interceptedRequest.abort();
+            interceptedRequest.respond({
+                status: 200,
+                body: "",
+              });
         } else {
             interceptedRequest.continue();
         }
