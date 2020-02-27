@@ -24,19 +24,22 @@ const lt = require('long-timeout');
         await login(initPage, martrikelNr, password);
 
         /**
-         * get windowhandler.js file first to speed up later refresh
+         * get windowhandler.js file first to speed up later page-loads (kind of caching)
          */
         console.log('get windowhandler.js...');
         let windowHandlerJs = '';
         initPage.on('response', async response => {
+            // block requests for missing files - no caching available for them
             if (![200, 201, 304].includes(response.status())) {
                 return;
             }
+
             try {
                 await response.buffer();
                 const url = response.url();
 
-                if (url.indexOf('.js.xhtml') !== -1) {
+                // gather the content of these 2 js files for later offline injection
+                if (url.indexOf('windowhandler.js.xhtml') !== -1 || url.indexOf('windowIdHandling.js.xhtml') !== -1) {
                     response.text()
                         .then(text => {
                             windowHandlerJs += ' ' + text;
@@ -53,7 +56,7 @@ const lt = require('long-timeout');
         await initPage.evaluateOnNewDocument(windowHandlerJs);
 
         /**
-         * prevent all kinds of dependencies
+         * prevent all types of dependencies like images, css from being loaded -> better performance, lower latencies
          */
         await interceptRequests(initPage);
 
@@ -79,7 +82,34 @@ const lt = require('long-timeout');
         /**
          * sort
          */
-        registrations.sort((a, b)=> a.begin - b.begin);
+        registrations.sort((a, b) => a.begin - b.begin);
+
+        /**
+         * status update interval
+         */
+        let updateInterval = null;
+
+        /**
+         * function called every 10s and on state updates
+         */
+        const finishedCheck = async () => {
+            console.log('pending: ' + (registrations.length - error - finished) + ', finished: ' + finished + ', error: ' + error);
+
+            if (error + finished === registrations.length) {
+                console.log('finished registration...');
+                await browser.close();
+
+                // clear interval if set
+                if (updateInterval) {
+                    clearInterval(updateInterval);
+                }
+            }
+        };
+
+        /**
+         * start status updates
+         */
+        updateInterval = setInterval(finishedCheck, 10000);
 
         let error = 0;
         let finished = 0;
@@ -97,6 +127,7 @@ const lt = require('long-timeout');
                 if (millisTillEnd < moment().valueOf()) {
                     console.log('registration over: ' + registrations[i].name);
                     error++;
+                    finishedCheck();
                     continue;
                 }
             }
@@ -111,73 +142,76 @@ const lt = require('long-timeout');
              * login 30 seconds before registration starts
              */
             lt.setTimeout(async () => {
-                const page = await newPageWithNewContext(browser);
+                let retryNecessary = true;
 
-                page.error = () => {
-                    error++;
-                }
+                while (retryNecessary) {
+                    const page = await newPageWithNewContext(browser);
 
-                page.finished = () => {
-                    finished++;
-                }
+                    page.error = () => {}
 
-                try {
-                    /**
-                     * login
-                     */
-                    await login(page, martrikelNr, password);
+                    page.finished = () => {
+                        finished++;
+                        finishedCheck();
+                    }
 
-                    /**
-                     * prevent all kinds of dependencies
-                     */
-                    await interceptRequests(page);
+                    try {
+                        /**
+                         * login
+                         */
+                        await login(page, martrikelNr, password);
 
-                    /**
-                     * register windowhandler.js file
-                     */
-                    await page.evaluateOnNewDocument(windowHandlerJs);
+                        /**
+                         * prevent all kinds of dependencies
+                         */
+                        await interceptRequests(page);
 
-                    /**
-                     * load register page
-                     */
-                    await page.goto(registrations[i].address);
-                    await page.waitFor('form');
+                        /**
+                         * register windowhandler.js file
+                         */
+                        await page.evaluateOnNewDocument(windowHandlerJs);
 
-                    /**
-                     * refresh millis
-                     */
-                    millisTillBegin = moment(registrations[i].begin, 'DD.MM.YYYY, HH:mm').valueOf();
-                    millisTillBegin = millisTillBegin - moment().valueOf();
+                        /**
+                         * load register page
+                         */
+                        await page.goto(registrations[i].address);
+                        await page.waitFor('form');
 
-                    /**
-                     * register
-                     */
-                    lt.setTimeout(async () => {
-                        try {
-                            await register(page, registrations[i].name);
-                            await closePage(browser, page);
-                            page.finished();
-                        } catch(ex) {
-                            await closePage(browser, page);
-                            page.error();
-                        }
-                    }, millisTillBegin);
-                } catch(ex) {
-                    await closePage(browser, page);
-                    page.error();
+                        /**
+                         * refresh millis
+                         */
+                        millisTillBegin = moment(registrations[i].begin, 'DD.MM.YYYY, HH:mm').valueOf();
+                        millisTillBegin = millisTillBegin - moment().valueOf();
+
+                        await new Promise((resolve, reject) => {
+                            /**
+                             * register
+                             */
+                            lt.setTimeout(async () => {
+                                try {
+                                    await register(page, registrations[i].name);
+                                    await closePage(browser, page);
+                                    retryNecessary = false;
+                                    page.finished();
+                                    resolve();
+                                } catch(ex) {
+                                    retryNecessary = true;
+                                    page.error();
+                                    reject();
+                                }
+                            }, millisTillBegin);
+                        });
+                    } catch(ex) {
+                        await closePage(browser, page);
+                        page.error();
+                        retryNecessary = true;
+                        console.log(ex);
+                        console.log('something went wrong, maybe the connection could not be established...');
+                        console.log('retrying in 10 seconds...');
+                        await sleep(10000);
+                    }
                 }
             }, Math.max(millisTillBegin - 30000, 0));
         }
-
-        let update = setInterval(async () => {
-            console.log('pending: ' + (registrations.length - error - finished) + ', finished: ' + finished + ', error: ' + error);
-
-            if (error + finished === registrations.length) {
-                console.log('finished registration...');
-                await browser.close();
-                clearInterval(update);
-            }
-        }, 10000);
     } catch(ex) {
         console.log(ex);
         process.exit();
@@ -251,18 +285,45 @@ async function closePage(browser, page) {
 async function register(page, name) {
     console.log('register ' + name + '...');
 
+    let attempt = 1;
+
     let time = Date.now();
 
-    await page.reload();
-    await page.waitFor('.groupWrapper');
+    while (attempt > 0) {
+        try {
+            console.log('attempt: ' + attempt + '...');
 
-    let wrapper = await getWrapper(page, name);
+            console.log('reload page...');
 
-    await page.waitFor('input[name="' + wrapper.selectorName + '"]');
-    await page.click('input[name="' + wrapper.selectorName + '"]');
-    await page.waitFor('input[value="Anmelden"]');
-    await page.click('input[value="Anmelden"]');
-    await page.waitFor('#wrapper');
+            await page.reload();
+            await page.waitFor('.groupWrapper');
+
+            let wrapper = await getWrapper(page, name);
+
+            console.log('search for registration button...');
+
+            await page.waitFor('input[name="' + wrapper.selectorName + '"]', { timeout: 100 });
+            await page.click('input[name="' + wrapper.selectorName + '"]');
+            await page.waitFor('input[value="Anmelden"]');
+            await page.click('input[value="Anmelden"]');
+            await page.waitFor('#wrapper');
+
+            console.log('registration succeeded on ' + attempt + '. attempt...');
+            attempt = 0;
+        } catch (ex) {
+            console.log('can not find registration button...');
+            const sleepTime = 500 * Math.ceil(attempt / 10);
+            console.log('try again in ' + sleepTime + 'ms...');
+            await sleep(500 * (attempt / 5));   // every 5. attempt, the time between a retry is increased by 500ms
+            attempt++;
+
+            if (attempt > 30) {
+                console.log('could not find button after 30 attempts...');
+                console.log('retrying a new login now...');
+                throw new Error();
+            }
+        }
+    }
 
     let text = await page.evaluate(() => {
         var message = document.querySelector('.staticInfoMessage');
@@ -275,6 +336,10 @@ async function register(page, name) {
 
     console.log('response: ' + text.trim());
     console.log('registration request-process of ' + name + ' took ' + (Date.now() - time) + 'ms');
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /**
