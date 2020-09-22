@@ -1,4 +1,4 @@
-# TissRegistrationBot
+# Tiss Registration Bot
 This bot should help people like you and me who typically forget registering to courses on time and don't get a place.
 
 ## Requirements

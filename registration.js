@@ -250,11 +250,11 @@ async function interceptRequests(page) {
 async function login(page, martrikelNr, password) {
     console.log('login...');
     await page.goto('https://iu.zid.tuwien.ac.at/AuthServ.portal');
-    await page.waitFor('form');
-    await page.$eval('input[name="name"]', (element, martrikelNr) => element.value = martrikelNr, martrikelNr);
-    await page.$eval('input[name="pw"]', (element, password) => element.value = password, password);
-    await page.click('input[type="submit"]');
-    await page.waitFor('#main-content');
+    await page.waitFor('form[name="f"]');
+    await page.$eval('input[name="username"]', (element, martrikelNr) => element.value = martrikelNr, martrikelNr);
+    await page.$eval('input[name="password"]', (element, password) => element.value = password, password);
+    await page.click('button[type="submit"]');
+    await page.waitFor('#wpPageWrapper');
 }
 
 /**
