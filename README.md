@@ -33,7 +33,7 @@ Here, `register.json` is a console-parameter and represents the .json formatted 
 **Do not forget to delete the sample itmes in register.json before you start the bot!**
 
 Keep in mind a few things when using the bot:
- - If TISS is busy, the bot may not register you correctly. One possible case: bot sends request exactly at start date of the registration, the request is somehow "too fast" and TISS answers with the page from before registration was unlocked - in this case, the bot can not find the registration button on the page and it won't try it again. One possible way to handle this is add some timeout after the begin date of a few hundred milliseconds (may be slow and the error from before still can occur) or implement an additional reload if the register button is not available (better solution). However, this case only occurred once.
+ - If TISS is busy, the bot may not register you correctly.
  - The bot does not have a reconnect function for the caching process and chrome can always throw some errors.
  - If an error occurs (eg credentials are wrong), the bot cancels a single registration or terminates as a whole.
  - Insert only german course names as the default language from tiss is german.
