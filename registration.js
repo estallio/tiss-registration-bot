@@ -39,7 +39,7 @@ const lt = require('long-timeout');
                 const url = response.url();
 
                 // gather the content of these 2 js files for later offline injection
-                if (url.indexOf('windowhandler.js.xhtml') !== -1 || url.indexOf('windowIdHandling.js.xhtml') !== -1) {
+                if (url.indexOf('windowhandler.js.xhtml') !== -1 || url.indexOf('windowIdHandling.js.xhtml') !== -1 || url.indexOf('utils.js.xhtml') !== -1) {
                     response.text()
                         .then(text => {
                             windowHandlerJs += ' ' + text;
@@ -231,6 +231,7 @@ async function interceptRequests(page) {
         || url.indexOf('.jpg') !== -1
         || url.indexOf('.css') !== -1
         || url.indexOf('.ico') !== -1
+        || url.indexOf('.svg') !== -1
         || url.indexOf('.js') !== -1
         || url.indexOf('.gif') !== -1) {
             interceptedRequest.respond({
